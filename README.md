@@ -12,4 +12,5 @@
 ## Reference Guides
 * FONA Shield: https://learn.adafruit.com/adafruit-fona-808-cellular-plus-gps-shield-for-arduino?view=all
 * FONA Mini: https://learn.adafruit.com/adafruit-fona-808-cellular-plus-gps-breakout?view=all
-* https://learn.adafruit.com/1-8-tft-display?view=all
+* TFT: https://learn.adafruit.com/1-8-tft-display?view=all
+* SD: https://learn.adafruit.com/adafruit-micro-sd-breakout-board-card-tutorial?view=all
