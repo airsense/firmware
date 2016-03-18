@@ -11,13 +11,6 @@
     #include <SPI.h>
     // use hardware SPI
     Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS,  TFT_DC, TFT_RST);
-    void tft_clear();
-    /*void tft_println(const char c[], int size = 1, uint16_t col = ST7735_WHITE);*/
-    /*void tft_print(const __FlashStringHelper *ifsh, int *val = NULL, int size = 1, uint16_t col = ST7735_WHITE);
-    #define DEBUG_PRINT1(x)             tft_print(x);
-    #define DEBUG_PRINT2(x, n)          tft_print(x, n);
-    #define DEBUG_PRINT3(x, n, y)       tft_print(x, n, y);
-    #define DEBUG_PRINT4(x, n, y, z)    tft_print(x, n, y, z);*/
     #define DEBUG_FONT_SIZE(x) tft.setTextSize(x);
     #define DEBUG_FONT_COLOR(x) tft.setTextColor(x);
     #define DEBUG_CLEAR() {tft.fillScreen(ST7735_BLACK); tft.setCursor(0, 0);}
@@ -43,7 +36,8 @@ SoftwareSerial *fonaSerial = &fonaSS;
 Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
 
 int raw[5];     // global raw variable to store readings
-
+/*String to_send;*/
+char to_send[300];
 
 void setup_gsm() {
     // main connection page
@@ -259,27 +253,64 @@ void setup() {
 
 }
 
+
+
 void loop() {
     raw[CO] = analogRead(CO);
     raw[NO2] = analogRead(NO2);
     raw[O3] = analogRead(O3);
     /*raw[PM25] = analogRead(PM25);*/
     /*raw[PM10] = analogRead(PM10);*/
-
-    DEBUG_PRINT(F("CO:\t"));
-    DEBUG_PRINTLN(raw[CO]);
-    DEBUG_PRINT("NO2:\t");
-    DEBUG_PRINTLN(raw[NO2]);
-    DEBUG_PRINT("O3:\t");
-    DEBUG_PRINTLN(raw[O3]);
-    delay(3000);
     DEBUG_CLEAR()
+    DEBUG_FONT_COLOR(ST7735_GREEN)
+    DEBUG_PRINTLN(F("Sensors:"))
+    DEBUG_FONT_COLOR(ST7735_WHITE)
+    DEBUG_PRINT(F("CO:    "))
+    DEBUG_PRINTLN(raw[CO])
+    DEBUG_PRINT("NO2:   ")
+    DEBUG_PRINTLN(raw[NO2])
+    DEBUG_PRINT("O3:    ")
+    DEBUG_PRINTLN(raw[O3])
+    read_pm();
+    DEBUG_PRINT("PM2.5: ")
+    DEBUG_PRINTLN(raw[PM25])
+    DEBUG_PRINT("PM10:  ")
+    DEBUG_PRINTLN(raw[PM10])
+
+    // TODO: remove quatation marks from reply buffer
+    //char t_buff[23];
+    //fona.getTime(t_buff, 23);  // make sure replybuffer is at least 23 bytes!
+
+    float lat, lon;
+    !fona.getGSMLoc(&lat, &lon);
+
+    uint16_t vbat;
+    fona.getBattVoltage(&vbat))
+
+    sprintf(to_send, "http://airsense.azurewebsites.net/newdataget?sub=test1&d_id=proto1&type=open&lat=%ld&lng=%ld&o3=%d&co=%d&no2=%d&pm25=%d&pm10=%d&volt=%u", long(lat*10000), long(lon*10000), raw[O3], raw[CO], raw[NO2], raw[PM25], raw[PM10], vbat);
+    /*Serial.println(to_send);*/
+
+
+    uint16_t statuscode;
+    int16_t length;
+    /*"http://airsense.azurewebsites.net/newdataget?device_id=a1234_232&device_type=FONA1&gmt_time=03/09/2016/23:09:40&gps_lat=48.8582&gps_long=2.2945&o3_raw=0.001&co_raw=0.002&no2_raw=0.003&pm_small_raw=0.004&pm_large_raw=0.005&temp_raw=17.3&humidity_raw=55&batt_voltage=4.19"*/
+    if (!fona.HTTP_GET_start(to_send, &statuscode, (uint16_t *)&length)) {
+      /*Serial.println("Failed!");*/
+      DEBUG_FONT_COLOR(ST7735_RED)
+      DEBUG_PRINTLN("FAILED")
+    } else {
+        DEBUG_FONT_COLOR(ST7735_GREEN)
+        DEBUG_PRINTLN(F("SENT"))
+    }
+    fona.flush();
+    fona.HTTP_GET_end();
+    delay(20000);
 }
 
-void tft_clear() {
+/*void tft_clear() {
     tft.fillScreen(ST7735_BLACK);
     tft.setCursor(0, 0);
-}
+}*/
 
 /*void tft_println(const char c[], int size = 1, uint16_t col = ST7735_WHITE) {
     tft.setTextSize(size);
