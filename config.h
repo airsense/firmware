@@ -3,6 +3,10 @@
 *   pin assignments, constants, values, misc. settings
 ------------------------*/
 
+// device specific configs
+const char* id = "proto1";
+const char* subid = "dc";
+
 // generic configs
 #define DISP                // defined for unit with lcd display
 #define LEDS                // defined for unit with addressable LEDs
@@ -26,3 +30,6 @@
 #define PM_25_HRESHOLD 10
 #define PM_10_HRESHOLD 10
 #define PM_MEAS_TIME 30000
+
+#define NEO_PIN         7
+#define NUMPIXELS       3

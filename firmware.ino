@@ -1,6 +1,7 @@
 #include "config.h"
 #include "Adafruit_FONA.h"
 #include <SoftwareSerial.h>
+#include <Adafruit_NeoPixel.h>
 
 // -------------------------
 // ----- Dislay setup ------
@@ -34,6 +35,9 @@ SoftwareSerial fonaSS = SoftwareSerial(FONA_TX, FONA_RX);
 SoftwareSerial *fonaSerial = &fonaSS;
 /*HardwareSerial *fonaSerial = &Serial;*/
 Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
+// 3 addressable LEDs
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, NEO_PIN, NEO_GRB + NEO_KHZ800);
+/*const char* id = "build1";*/
 
 int raw[5];     // global raw variable to store readings
 /*String to_send;*/
@@ -207,7 +211,9 @@ void heatup_routine() {
         DEBUG_SET_CURSOR(0, 49)
         diff = (millis() - t);
         if ((diff % 1000) == 0) {
+#ifdef DISP
             tft.fillRect(0, 49, 50, 15, ST7735_BLACK);
+#endif
             DEBUG_PRINT(30-int(diff/1000))
             DEBUG_PRINTLN('s')
         }
@@ -229,9 +235,14 @@ void setup() {
     Serial.begin(115200);
 #endif
 
+    pixels.begin(); // This initializes the NeoPixel library.
+    pixels.setPixelColor(0, pixels.Color(0,0,200)); // Moderately bright green color.
+    pixels.setPixelColor(1, pixels.Color(0,100,100)); // Moderately bright green color.
+    pixels.setPixelColor(2, pixels.Color(0,200,0)); // Moderately bright green color.
+    pixels.show();
+
     /*Serial.println(FONA_RX);*/
     /*Serial.println("Serial Initialized");*/
-
     setup_gsm();
 
 #ifdef HEAT
@@ -285,10 +296,10 @@ void loop() {
     !fona.getGSMLoc(&lat, &lon);
 
     uint16_t vbat;
-    fona.getBattVoltage(&vbat))
+    fona.getBattVoltage(&vbat);
 
-    sprintf(to_send, "http://airsense.azurewebsites.net/newdataget?sub=test1&d_id=proto1&type=open&lat=%ld&lng=%ld&o3=%d&co=%d&no2=%d&pm25=%d&pm10=%d&volt=%u", long(lat*10000), long(lon*10000), raw[O3], raw[CO], raw[NO2], raw[PM25], raw[PM10], vbat);
-    /*Serial.println(to_send);*/
+    sprintf(to_send, "http://airsense.azurewebsites.net/newdataget?sub=%s&d_id=%s&type=demo&lat=%ld&lng=%ld&o3=%d&co=%d&no2=%d&pm25=%d&pm10=%d&volt=%u", subid, id, long(lat*10000), long(lon*10000), raw[O3], raw[CO], raw[NO2], raw[PM25], raw[PM10], vbat);
+    Serial.println(to_send);
 
 
     uint16_t statuscode;
